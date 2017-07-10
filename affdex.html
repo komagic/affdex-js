@@ -7,34 +7,35 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
     <script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
-     <!--<script src = "https://download.affectiva.com/js/3.2/affdex.js"></script> -->
+    <!--<script src = "https://download.affectiva.com/js/3.2/affdex.js"></script> -->
     <script src = "js-sdk/affdex.js"></script>
     <script src = "video.js"> </script>
 </head>
 <body>
 
-    <div>    
-        <video id="video1" controls width="480" src="P1-Rec1-2009_07_09_17_53_46_BW2_BW_Section_6.mp4"></video> 
-        <canvas id="canvas1" width="480" height="320"></canvas>
-        <script>
-            var v = document.getElementById("video1");
-            var c = document.getElementById("canvas1");
-            ctx = c.getContext('2d');
-
-            v.addEventListener('play', function() {
-                var i = window.setInterval(function() {
-                    ctx.drawImage(v, 0, 0, 480, 320)
-                }, 1000);
-            }, false);
-        </script> 
-        
-        <div style="height:25em;">
-            <strong>EMOTION TRACKING RESULTS</strong>
-            <div id="results" style="word-wrap:break-word;"></div>
-        </div>
-        <div id="logs">logs:</div>
     
+  
+    <video id="video1" controls width="480" src="4_front.mp4"></video> 
+    <canvas id="canvas1" width="480" height="320"></canvas>
+    <script>
+        var v = document.getElementById("video1");
+        var c = document.getElementById("canvas1");
+        ctx = c.getContext('2d');
+
+        v.addEventListener('play', function() {
+            var i = window.setInterval(function() {
+                ctx.drawImage(v, 0, 0, 480, 320)
+            }, 50);
+        }, false);
+    </script> 
+    
+    <div style="height:25em;">
+        <strong>EMOTION TRACKING RESULTS</strong>
+        <div id="results" style="word-wrap:break-word;"></div>
     </div>
+    <div id="logs">LOGS:</div>
+    
+
     
 
 </body>

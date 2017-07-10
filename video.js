@@ -51,12 +51,13 @@ $(document).ready(function(){
         detector.process(imageData, deltaTime);
         //log('#logs', 'processed');
       }
-    }, 1000);
+    }, 50);
     
   }, false);
 
   v.addEventListener('pause', function () {
     detector.stop();
+    detector.reset();
   });
 
   detector.addEventListener("onImageResultsSuccess", function (faces, image, timestamp) {  
@@ -77,7 +78,7 @@ $(document).ready(function(){
       }));
       drawFeaturePoints(image, faces[0].featurePoints);
 
-      track();
+
     }
   });
 
