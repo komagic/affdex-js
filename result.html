@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <script src = "https://code.jquery.com/jquery.js"> </script>
+
+        <script>
+            $(document).ready(function(){
+                for(var i = 0; i < 20; i++){
+                    var data = localStorage.getItem(i);
+                    var result = JSON.parse(data);
+                    log('#data', data);
+                }
+
+            });
+            
+            function log(node_name, msg) {
+                $(node_name).append("<span>" + msg + "</span><br />")
+            }
+        </script>
+    </head>
+    <body>
+        <p id=data></p>
+    </body>
+</html>

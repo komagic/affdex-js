@@ -1,11 +1,9 @@
 var detector = null;
 $(document).ready(function(){
-  // SDK Needs to create video and canvas nodes in the DOM in order to function
-  // Here we are adding those nodes a predefined div.
-  var width = 480;
-  var height = 320;
-  var faceMode = affdex.FaceDetectorMode.LARGE_FACES;
 
+  var faceMode = affdex.FaceDetectorMode.LARGE_FACES;
+  // var faceMode = affdex.FaceDetectorMode.SMALL_FACES;
+  
   var detector = new affdex.FrameDetector(faceMode);
     
   //Enable detection of all Expressions, Emotions and Emojis classifiers.
@@ -13,23 +11,21 @@ $(document).ready(function(){
   detector.detectAllExpressions();
   detector.detectAllEmojis();
   detector.detectAllAppearance();
-  log('#logs', 'starting');
-
+  console.log("starting now...");
   var startTimestamp;
   detector.start();
 
   //Add a callback to notify when the detector is initialized and ready for runing.
   detector.addEventListener("onInitializeSuccess", function() {
-    //log('#logs', "The detector reports initialized");
-    log('#logs', 'started');
+    console.log("started");
     startTimestamp = (new Date()).getTime() / 1000;
-    
+    localStorage.clear();    
   });
 
 
 
   detector.addEventListener("onInitializeFailure", function () {
-    log('#logs', "init failed");
+    console.log("init failed");
   });
 
   v = document.getElementById("video1");
@@ -46,12 +42,10 @@ $(document).ready(function(){
       var imageData = context.getImageData(0, 0, 480, 320);
       var now = (new Date()).getTime() / 1000;
       var deltaTime = now - startTimestamp;
-      //log('#logs', 'before process');
       if (detector && detector.isRunning) {
         detector.process(imageData, deltaTime);
-        //log('#logs', 'processed');
       }
-    }, 50);
+    }, 500);
     
   }, false);
 
@@ -60,6 +54,9 @@ $(document).ready(function(){
     detector.reset();
   });
 
+  var result = new Array();
+
+  var cnt = 0;
   detector.addEventListener("onImageResultsSuccess", function (faces, image, timestamp) {  
     $('#results').html("");
     log('#results', "Timestamp: " + timestamp.toFixed(2));
@@ -78,6 +75,15 @@ $(document).ready(function(){
       }));
       drawFeaturePoints(image, faces[0].featurePoints);
 
+      var jsonData = {
+        'time': timestamp.toFixed(2), 'emotion': JSON.stringify(faces[0].emotions, function (key, val) {
+          return val.toFixed ? Number(val.toFixed(0)) : val;
+        }), 'Points': JSON.stringify(faces[0].featurePoints, function (key, val) {
+          return val.toFixed ? Number(val.toFixed(0)) : val;
+        }) };
+      localStorage.setItem(cnt, JSON.stringify(jsonData));
+      cnt = cnt + 1;
+      
 
     }
   });
