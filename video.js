@@ -1,41 +1,34 @@
 var detector = null;
 $(document).ready(function(){
 
-  var faceMode = affdex.FaceDetectorMode.LARGE_FACES;
-  // var faceMode = affdex.FaceDetectorMode.SMALL_FACES;
+  // var faceMode = affdex.FaceDetectorMode.LARGE_FACES;
+  var faceMode = affdex.FaceDetectorMode.SMALL_FACES;
   
   var detector = new affdex.FrameDetector(faceMode);
     
   //Enable detection of all Expressions, Emotions and Emojis classifiers.
   detector.detectAllEmotions();
   detector.detectAllExpressions();
-  detector.detectAllEmojis();
-  detector.detectAllAppearance();
-  console.log("starting now...");
+  //detector.detectAllEmojis();
+  //detector.detectAllAppearance();
+  log("#logs","starting now...");
   var startTimestamp;
   detector.start();
 
   //Add a callback to notify when the detector is initialized and ready for runing.
   detector.addEventListener("onInitializeSuccess", function() {
-    console.log("started");
-    startTimestamp = (new Date()).getTime() / 1000;
+    log("#logs","started");
+    //startTimestamp = (new Date()).getTime() / 1000;
     localStorage.clear();    
   });
 
-
-
   detector.addEventListener("onInitializeFailure", function () {
-    console.log("init failed");
+    log("#logs","init failed");
   });
 
   v = document.getElementById("video1");
   v.addEventListener('play', function () {
-    if (!detector.isRunning) {
-      detector.start();
-      startTimestamp = (new Date()).getTime() / 1000;
-
-    }
-
+    startTimestamp = (new Date()).getTime() / 1000;
     var i = window.setInterval(function () {
       var aCanvas = document.getElementById('canvas1');
       var context = aCanvas.getContext('2d');
@@ -45,16 +38,9 @@ $(document).ready(function(){
       if (detector && detector.isRunning) {
         detector.process(imageData, deltaTime);
       }
-    }, 500);
+    }, 200);
     
   }, false);
-
-  v.addEventListener('pause', function () {
-    detector.stop();
-    detector.reset();
-  });
-
-  var result = new Array();
 
   var cnt = 0;
   detector.addEventListener("onImageResultsSuccess", function (faces, image, timestamp) {  
@@ -70,21 +56,38 @@ $(document).ready(function(){
        return val.toFixed ? Number(val.toFixed(0)) : val;
       }));
       log('#results', "Emoji: " + faces[0].emojis.dominantEmoji);
-      log('#results', "Points: " + JSON.stringify(faces[0].featurePoints, function(key, val) {
-          return val.toFixed ? Number(val.toFixed(0)) : val;
-      }));
+      // log('#results', "Points: " + JSON.stringify(faces[0].featurePoints, function(key, val) {
+      //     return val.toFixed ? Number(val.toFixed(0)) : val;
+      // }));
       drawFeaturePoints(image, faces[0].featurePoints);
 
       var jsonData = {
-        'time': timestamp.toFixed(2), 'emotion': JSON.stringify(faces[0].emotions, function (key, val) {
-          return val.toFixed ? Number(val.toFixed(0)) : val;
-        }), 'Points': JSON.stringify(faces[0].featurePoints, function (key, val) {
-          return val.toFixed ? Number(val.toFixed(0)) : val;
-        }) };
+        'time': timestamp.toFixed(2),
+        'nums': 1,
+        'emotion': faces[0].emotions,
+        'expression': faces[0].expressions
+      }
       localStorage.setItem(cnt, JSON.stringify(jsonData));
       cnt = cnt + 1;
+    } else {
+      jsonData = {
+        'time': timestamp.toFixed(2),
+        'nums': 0,
+        'emotion': {
+          "joy": 0, "sadness": 0, "disgust": 0, "contempt": 0, "anger": 0,
+          "fear": 0, "surprise": 0, "valence": 0, "engagement": 0
+        },
+        'expression': {
+          "smile": 0, "innerBrowRaise": 0, "browRaise": 0, "browFurrow": 0, "noseWrinkle": 0,
+          "upperLipRaise": 0, "lipCornerDepressor": 0, "chinRaise": 0, "lipPucker": 0, "lipPress": 0,
+          "lipSuck": 0, "mouthOpen": 0, "smirk": 0, "eyeClosure": 0, "attention": 0,
+          "lidTighten": 0, "jawDrop": 0, "dimpler": 0, "eyeWiden": 0, "cheekRaise": 0,
+          "lipStretch": 0
+        }
       
-
+      }
+      localStorage.setItem(cnt, JSON.stringify(jsonData));
+      cnt = cnt + 1;
     }
   });
 

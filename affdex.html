@@ -15,7 +15,7 @@
 
     
   
-    <video id="video1" controls width="480" src="6_up.mp4"></video> 
+    <video id="video1" controls width="480" src="6_left.mp4"></video> 
     <canvas id="canvas1" width="480" height="320"></canvas>
     <script>
         var v = document.getElementById("video1");
@@ -25,7 +25,7 @@
         v.addEventListener('play', function() {
             var i = window.setInterval(function() {
                 ctx.drawImage(v, 0, 0, 480, 320)
-            }, 500);
+            }, 200);
         }, false);
     </script> 
     
