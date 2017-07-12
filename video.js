@@ -1,28 +1,35 @@
 var detector = null;
+var db = openDatabase('myDB', '1.0', 'xx', 5 * 1024 * 1024);
+var folder = 2; 
+var no = 1;
+var itv;
+var startTimestamp;
+
+db.transaction(function (tx) {
+  tx.executeSql("create table if not exists emotions" + folder.toString() + '_' + no.toString() + "(time unique, nums, joy, sadness, disgust, contempt, anger, fear, surprise, valence, engagement)"); 
+});
 
 $(document).ready(function(){
 
-  // var faceMode = affdex.FaceDetectorMode.LARGE_FACES;
-  var faceMode = affdex.FaceDetectorMode.SMALL_FACES;
-  
-  var detector = new affdex.FrameDetector(faceMode);
+  var faceMode = affdex.FaceDetectorMode.LARGE_FACES;
+  // var faceMode = affdex.FaceDetectorMode.SMALL_FACES;
+  detector = new affdex.FrameDetector(faceMode);
 
-  v = document.getElementById("video1");
-
-    
+  v = document.getElementById("video1");    
   //Enable detection of all Expressions, Emotions and Emojis classifiers.
   detector.detectAllEmotions();
-  // detector.detectAllExpressions();
+  detector.detectAllExpressions();
   //detector.detectAllEmojis();
   //detector.detectAllAppearance();
 
   log("#logs","starting now...");
-  var startTimestamp;
   detector.start();
 
   v.addEventListener('play', function () {
+    detector.reset();
     startTimestamp = (new Date()).getTime() / 1000;
-    var i = window.setInterval(function () {
+    
+    itv = window.setInterval(function () {
       var aCanvas = document.getElementById('canvas1');
       var context = aCanvas.getContext('2d');
       var imageData = context.getImageData(0, 0, 480, 320);
@@ -31,44 +38,31 @@ $(document).ready(function(){
       if (detector && detector.isRunning) {
         detector.process(imageData, deltaTime);
       }
-    }, 200);
+    }, 500);
     
   }, false);
   
-    var folder = 2; 
-    var no = 2;
+  v.addEventListener('ended', function () {
+    window.clearInterval(itv);
+    console.log("clearITV");
+    nextVideo();
+    v.play();
 
-    v.addEventListener('ended', function () {
-      //detector.stop();
-      detector.reset();
-
-      // detector.start();
-      nextVideo();
-      localStorage.clear();
-      v.play();
-    })
+    db.transaction(function (tx) {
+      tx.executeSql("create table if not exists emotions"+ folder.toString() + '_' + no.toString() + "(time unique, nums, joy, sadness, disgust, contempt, anger, fear, surprise, valence, engagement)"); 
+    });
+  })
 
   //Add a callback to notify when the detector is initialized and ready for runing.
   detector.addEventListener("onInitializeSuccess", function() {
     log("#logs", "started");
     v.play();
-    //startTimestamp = (new Date()).getTime() / 1000;    
-    
-    
   });
 
   detector.addEventListener("onInitializeFailure", function () {
     log("#logs", "init failed, restarting now...");
-    // if ( detector.isRunning ) {
-    //   detector.stop();
-    //   // detector.reset();
-    //   // detector.start();
-    // }
   });
 
-
-
-  var cnt = 0;
   detector.addEventListener("onImageResultsSuccess", function (faces, image, timestamp) {  
     $('#results').html("");
     log('#results', "Timestamp: " + timestamp.toFixed(2));
@@ -86,34 +80,31 @@ $(document).ready(function(){
       //     return val.toFixed ? Number(val.toFixed(0)) : val;
       // }));
       drawFeaturePoints(image, faces[0].featurePoints);
+      //console.log(faces[0].emotions["joy"]);
 
-      var jsonData = {
-        'time': timestamp.toFixed(2),
-        'nums': 1,
-        'emotion': faces[0].emotions,
-        //'expression': faces[0].expressions
-      }
+      db.transaction(function (tx) {
+        tx.executeSql("insert into emotions" + folder.toString() + '_' + no.toString() + " values(?,?,?,?,?,?,?,?,?,?,?)", [
+          v.currentTime,
+          1,
+          faces[0].emotions["joy"],
+          faces[0].emotions["sadness"],
+          faces[0].emotions["disgust"],
+          faces[0].emotions["contempt"],
+          faces[0].emotions["anger"],
+          faces[0].emotions["fear"],
+          faces[0].emotions["surprise"],
+          faces[0].emotions["valence"],
+          faces[0].emotions["engagement"],
+        ]
+        )
+      });
+      
 
     } else {
-      jsonData = {
-        'time': timestamp.toFixed(2),
-        'nums': 0,
-        'emotion': {
-          "joy": 0, "sadness": 0, "disgust": 0, "contempt": 0, "anger": 0,
-          "fear": 0, "surprise": 0, "valence": 0, "engagement": 0
-        }
-        // 'expression': {
-        //   "smile": 0, "innerBrowRaise": 0, "browRaise": 0, "browFurrow": 0, "noseWrinkle": 0,
-        //   "upperLipRaise": 0, "lipCornerDepressor": 0, "chinRaise": 0, "lipPucker": 0, "lipPress": 0,
-        //   "lipSuck": 0, "mouthOpen": 0, "smirk": 0, "eyeClosure": 0, "attention": 0,
-        //   "lidTighten": 0, "jawDrop": 0, "dimpler": 0, "eyeWiden": 0, "cheekRaise": 0,
-        //   "lipStretch": 0
-        // }
-      
-      } 
+      db.transaction(function (tx) {
+        tx.executeSql("insert into emotions"+folder.toString()+'_'+no.toString()+" values(?,0,0,0,0,0,0,0,0,0,0)", [v.currentTime]);
+      });
     }
-    localStorage.setItem(cnt, JSON.stringify(jsonData));
-    cnt = cnt + 1;
   });
 
   //Draw the detected facial feature points on the image  
@@ -135,26 +126,28 @@ $(document).ready(function(){
   }
 
   function nextVideo() {
+    no += 1;
     $("#video1").attr("src", "./hci/Sessions/"+folder.toString()
       + '/' + no.toString() + ".mp4");
     
     $("#logs").append("<span>" + "./hci/Sessions/"+folder.toString()
-      +'/'+no.toString()+".mp4" + "</span><br />");
+      + '/' + no.toString() + ".mp4" + "</span><br />");
     
-    if(no == 4){
-      no = 0;
+    if(no == 5){
+      no = 1;
       folder += 1;
     }
     if(folder > 2){
       alert("done");
-    }
-    no += 1;
-  
+      v.pause();
+      detector.stop();
+    }  
   }
 });
 
 function log(node_name, msg) {
    $(node_name).append("<span>" + msg + "</span><br />") 
 }
+
 
 
